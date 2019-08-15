@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1565829581955.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3700371556",
+    "id" : "2015C03C",
+    "lastKnownWriteTime" : 1564938356,
+    "last_content_update" : 1564938356,
+    "path" : "~/Desktop/Cecilia/Study/DPSS/R/Assignment/Assignment2/assign2.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "63,2",
+        "scrollLine" : "48"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 8,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

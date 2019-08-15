@@ -1,0 +1,163 @@
+library(tidyverse)
+library(lubridate)
+library(forcats)
+
+weather <- read_csv("ohare_airport_temps.csv")
+weather <- weather %>%
+  mutate(
+    year = str_sub(timestamp,1,4),
+    month = str_sub(timestamp,6,7),
+    day = str_sub(timestamp,9,10),
+    week = week(as.Date(timestamp)),
+    time = as.numeric(str_sub(timestamp,12,13))
+  )
+
+#Section1
+# 1. 
+temp_set <- weather %>%
+  group_by(year) %>%
+  summarize(mean_temp = mean(temp_f)) %>%
+  arrange(mean_temp)
+# Coldest year: 2019 and 2014
+
+# 2.
+weather %>%
+  group_by(time) %>%
+  mutate(temp = mean(temp_f)) %>%
+  arrange(-temp) 
+# Average hottest hour: 20
+
+# 3.
+weather %>%
+  group_by(year, month, day) %>%
+  filter(time == 3 | time == 15) %>%
+  mutate(diff = abs(temp_f - lag(temp_f,1))) %>%
+  arrange(-diff)
+# Largest swing: 2008/12/15, Monday 
+
+# 4.
+spread_temp <- weather %>%
+  group_by(year,week) %>%
+  summarize(ave_temp = mean(temp_f)) %>%
+  group_by(week) %>%
+  mutate(diff = abs(ave_temp - lag(ave_temp,1))) %>%
+  arrange(-diff)
+# the biggest swing is the 12th week from 2012-2013
+
+# plot
+temp_set %>%
+  arrange(year) %>%
+  filter(year >= 2001 & year <= 2018) %>%
+  mutate(year = as.numeric(year)) %>%
+  ggplot(aes(x=year, y=mean_temp)) +
+  scale_x_continuous(breaks = seq(2000, 2020, 5)) +
+  scale_y_continuous(breaks = seq(48, 56, 2)) +
+  geom_line(colour = "#B50D71", size=1) +
+  labs(
+    title = "Average Temperature by Year in Chicago",
+    x = "Year",
+    y = "Temperature°F",
+    caption = "Source: NOAA Weather Station, O'Hare Airport"
+  ) +
+  geom_point(x=2014, y=47.86) +
+  # geom_text(label = "Chicago's polar vortex year", x = 2009, y = 50) +
+  annotate("text", x = 2009, y = 48.5, label = "Chicago's polar vortex year") +
+  annotate("segment", x = 2011, xend = 2014, y = 48.2, yend = 47.86) +
+  theme(
+    axis.text.y = element_text(size = 6)
+  )  +
+  theme_bw()
+
+#Section2
+#install.packages("RSocrata")
+#library(RSocrata)
+library(jsonlite)
+crime_url <- "https://data.cityofchicago.org/resource/crimes.json?&primary_type=HOMICIDE&$limit=10000"
+crime_data <- read_json(crime_url, simplifyVector = TRUE)
+
+crime_data <- crime_data %>%
+  mutate(
+    hour = hour(ymd_hms(date)),
+    week = week(ymd_hms(date))
+  )
+
+# 1.
+crime_data %>%
+  group_by(year) %>%
+  count() %>%
+  arrange(-n)
+# 2016
+
+# 2.
+crime_data %>%
+  group_by(hour) %>%
+  summarize(cri = n()) %>%
+  arrange(-cri) 
+# the 0st hour, 12am
+
+#3.
+area_url <- "https://data.cityofchicago.org/resource/5tiy-yfrg.json"
+area_data <- read_json(area_url, simplifyVector = TRUE)
+area_data <- area_data %>% 
+  select(community_area_number, community_area_name) %>%
+  distinct() %>%
+  arrange(as.numeric(community_area_number))
+
+crime_least <- crime_data %>%
+  group_by(community_area) %>%
+  count() %>%
+  ungroup() %>%
+  arrange(n) %>%
+  left_join(area_data, by=c("community_area" = "community_area_number"), na.rm = TRUE) 
+# 9 - EDISON PARK
+
+color <- c("#FEC9D7", "#FEA9C0", "#F687A4","#F96FCB","#E71FF6","#9400D3","#960F9F")
+crime_data %>%
+  group_by(year,week) %>%
+  summarize(crime_num = n(), na.rm=TRUE) %>%
+  filter(year >= 2001 & year <= 2017 & week <= 50) %>%
+  ggplot(aes(x=week, y=fct_rev(year))) +
+  geom_tile(aes(fill=cut(crime_num,breaks=seq(0,40,5),
+                         label = c("(0,5]","(5,10]","(10,15]","(15,20]","(20,25]","(25,30]","(30,35]","(35,40]")))) +
+  scale_y_discrete(expand = c(0,0), breaks = seq(2001, 2017, 2)) +
+  scale_x_continuous(expand = c(0,0)) +
+  theme(plot.margin = margin(1, 1, 1, 1, "cm")) +
+  labs(
+    title = "Homicides Over Time in Chicago",
+    x = "Week",
+    y = "Year",
+    caption = "Source: City of Chicago Data Portal",
+    fill = "Number of Homicides"
+  ) + 
+  scale_fill_manual(values = color) +
+  theme_bw()
+
+#Section3
+wth_weekly <- weather %>%
+  group_by(week) %>%
+  summarize(week_mean = mean(temp_f))
+
+crm_weekly <- crime_data %>%
+  group_by(week) %>%
+  summarize(cri = n() / 19)
+
+combine_val <-
+  left_join(wth_weekly,crm_weekly,by="week") 
+
+combine_val %>%
+  ggplot(aes(x=week)) +
+  geom_smooth(aes(y=cri, color="blue"), se=FALSE, size=1) +
+  geom_smooth(aes(y=week_mean/5, color="red"), se=FALSE, size=1) +
+  scale_x_discrete(limit = c(0:50), breaks = seq(0, 50, 10)) +
+  scale_y_continuous(
+    sec.axis = sec_axis(~.*5, name = "Average Temp", breaks = seq(20, 70, 10), labels=paste(seq(20, 70, 10), "°F",sep=""))
+    ) +
+  labs(title="Homicides vs Temperature in Chicago (2001 − 2019)",
+       y = "Average # of Homicides",
+       x = "Week") +
+  scale_color_manual(name="Type", values=c("blue"="blue", "red"="red"), labels=c("Homicide","Temp")) +
+  theme_bw()
+# One of the potential problem lies in the differences in the scale of the two y axis, and putting the two line together in this plot might confuse the readers when reading the numeric values of each line from their relative positions.
+# Another problem might be the range of the comparison. As the data of homicides is gathered across the city of Chicago, while the temperature data only represents O'hare airport, it is not rigid to put the two data set into comparison and draft such a title for the graph.
+ 
+  

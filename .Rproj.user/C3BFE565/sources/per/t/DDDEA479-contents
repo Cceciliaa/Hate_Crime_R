@@ -1,0 +1,278 @@
+---
+title: "Hate Crimes in the U.S."
+author: "Cecilia Cai"
+date: "8/10/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+  
+  
+
+## Research Background
+
+  A hate crime, as defined by the FBI, is a crime "motivated in whole or in part by an offender’s bias against a race, religion, disability, sexual orientation, ethnicity, gender, or gender identity”. As stated by the FBI, "on average, U.S. residents experienced an estimated 250,000 hate crime victimizations each year between 2004 and 2015". In our capstone project, we looked into the data related to the occurrance of hate crimes across the U.S., trying to locate potential influencing factors.
+  
+  I use average annual hate crimes per 100k population as our dependent variable, getting the data from the FBI official website, and specifically, the 2017 report by states. According to the official FBI website on hate crimes (https://www.fbi.gov/services/cjis/ucr/hate-crime), these data was collected by the Uniform Crime Reporting (UCR) Program, who cooperated with many local and state law enforcement agencies to track and verify the data. The incidents are reported by individuals and agencies to the the UCR voluntarily, who then categorizes and gather these data by the biases and motivations of the cases. This process potentially bears many biases. For one thing, the inconsistent in public's perception of hate crime might result in the disparity in quality of the reported number across different stats. Although the FBI defination for hate crimes is quite detailed, the statement is rather conceptual, which is hard to evaluate by some universal standards. The significant differences in relevant laws and regulations, as well as their enforcement, across states, worsen the situation, for they potentially differ the public understanding and awareness of hate crimes, which affect their tendency to report a case. On the other hand, state governments may also modify their reported data for certain political purposes. For another, the unsystematic and weakly operational methods of collecting data are likely to cause mistakes or missing values. And indeed, the FBI data set does not have record from some states such as Hawaii. 
+  
+
+```{r, IntroduceData, include=FALSE, message=FALSE}
+library(stargazer)
+library(tidyverse)
+library(lubridate)
+library(forcats)
+library(jsonlite)
+library(lwgeom)
+library(tidycensus)
+library(fredr)
+library(readxl)
+library(sf)
+library(ggplot2)
+library(plotly)
+library(quantmod)
+library(gapminder)
+
+census_api_key("03ab2d6505a1b176b91412dad7ca0692866d7799")
+census_vars <- load_variables(2016, "acs5")
+
+hc_nums <- read_xls("2017.xls")
+#divorced <- read_csv("divorced_rate.csv")
+alcohol <- read_csv("alcohol_per_cpt.csv")
+#inactive <- read_csv("phy_inactive_adults.csv")
+#psn_bankruptcy <- read_csv("personal_bankruptcy_rate.csv")
+#hl_security <- read_csv("homeland_security_grants19.csv")
+#no_internet <- read_csv("household_without_itn17.csv")
+#tequila <- read_csv("tequila_18.csv")
+gvm_debts <- read_csv("gvm_debts_pc.csv")
+firm_num <- read_csv("employer_firms16.csv")
+bkr_fillings <- read_csv("bankruptcy_fillings.csv")
+drug_death <- read_csv("Drug_overdose_death_rate17.csv")
+ctz <- read_csv("non_ctz_rate.csv")
+religion <- read_csv("religion_rate.csv")
+
+all_data <- get_acs(
+  geography = "state",
+  variables = c(total_pop = "B01003_001", 
+                medium_hs_income = "B19013_001", 
+                unemployed = "B27011_014", 
+                lbforce = "B27011_002", 
+                pvt_whi_under1 = "B17001A_002", 
+                pvt_etm = "B17001_001", 
+                GINIidx = "B19083_001", 
+                hs_gra = "B06009_003", 
+                edu_etm = "B06009_001", 
+                white = "B01001A_001", 
+                non_ctz = "B05001_006", 
+                ctz_etm = "B05001_001"),
+  year = 2016,
+  geometry = TRUE,
+  shift_geo = TRUE
+) %>%
+  select(-moe) %>%
+  spread(variable, estimate) %>%
+  left_join(hc_nums, by = "NAME") %>%
+  mutate(
+    pct_unemployed = unemployed / lbforce * 100,
+    pct_hs_degree = hs_gra / edu_etm * 100,
+    pct_whi_pvt = pvt_whi_under1 / pvt_etm * 100,
+    pct_nonwhite = (total_pop - white) / total_pop * 100,
+    #pct_white = white / total_pop * 100,
+    #pct_nonctz = non_ctz / ctz_etm * 100,
+    avr_hc = Total_icd / Total_pop * 100000
+  ) %>%
+  left_join(ctz, by = "NAME") %>%
+  mutate(
+    pct_nonctz = Non_Citizen * 100,
+  ) %>%
+  left_join(gvm_debts, by = "NAME") %>%
+  left_join(alcohol, by = "NAME") %>%
+  left_join(firm_num, by = "NAME") %>%
+  left_join(bkr_fillings, by = "NAME") %>%
+  left_join(religion, by = "NAME") %>%
+  left_join(drug_death, by="NAME")
+```
+
+</br></br>
+
+## Regression
+
+  In spite of many inevitable biases, it is still possible to get a basic understanding of the situation of hate crimes in the U.S. by relating the hate crime data to some other variables from other data sets, and analyse the correlations and causalities between these variables.
+  
+  In fact, I established a multivariable linear regression to investigate the factors related to hate crimes in the U.S.. As instructed, I referred to the 2016 ACS 5-year data, which is the latest version of the 5-year aggregated data. I also drew some 2017 data from other databases, for the year 2017 witnessed a great increase in hate crime occurrance, and would have more representitive data. I ran an initial regression using the required variables, without adding additional ones.
+  
+<div align="center">  
+```{r, regression, results='asis', echo=FALSE}
+my_rg <-
+  lm(avr_hc ~ medium_hs_income + pct_unemployed + pct_whi_pvt + GINIidx + pct_nonwhite + pct_hs_degree + pct_nonctz, data=all_data)
+#summary(my_rg)
+stargazer(my_rg, title="Regression Results", type="html", align=TRUE)
+```
+</div></br>
+  
+  As expected, and in line with the previous study conducted by the FiveThirtyEight, the variables of medium household income, GINI index, and percentage of white people below poverty line, all of which are indicators for the inequality level of the state, are positively correlate to average hate crimes and are showing great significance. This suggests that, inequality, especially in terms of income and social status, is an important determinant for the frequency of hate crimes. Moreover, I noticed that the percentage of non citizen negatively influences the happening of hate crimes, which was against my initial intuition. This result became clearer to me after some additional research on the contexts of hate crimes, as I learned that most of the hate crimes in the U.S. are actually conducted by white citizens. In fact, as a higher percentage of non citizens also indicates a more diversed culture and a more inclusive social environment, it might also explain the negative coefficient.
+  
+  For the two customized independent variables, I used the data from the statista, respectively per capita alcohol consumption and per capita state and local government debt. I ran a simple multivariable linear regression with these veriables as independent variables, without including any weights, fixed effects, or interaction terms, and the result is shown in the section below.
+  
+<div align="center"> 
+```{r, regression1, results='asis', echo=FALSE}
+my_rg1 <-
+  lm(avr_hc ~ medium_hs_income + pct_unemployed + pct_whi_pvt + GINIidx + pct_nonwhite + pct_hs_degree + pct_nonctz + alcohol_pc + debts, data=all_data)
+#summary(my_rg1)
+stargazer(my_rg1, title="Regression Results", type="html", align=TRUE)
+```
+</div></br>
+    
+  In this regression, both per capita alcohol consumption and per capita state and local government debt show positive influence to the average hate crimes per 100k population, with significant levels at respectively 90% and 95%. Besides, all other independent variables, except the percentage of unemployment rate, are showing high significant level, especially the percentage of noncitizen rate. The inclusion of these two variables also slightly increases the R-squared value, suggesting that they do improve the regression model without bringing in much noises. Analysing from common cognision, per capita state and local government debt evaluates the economic status of the state, which affects the general living quality of its people. Therefore, the higher the debts, which indicates that the state might be lacking money for its administrations and investments, the more likely hate crimes would occur. As for alcohol consumption, which is often related to irrationality and tendency to cause chaos, also holds the potential for increasing hate crimes.
+  
+  Curious about other influencing factors, I did an additional regression, taking out the two additional independent variables and filling in with the percentage of very religious people in each state. I chose this variable because many studies on hate crimes report a strong relation between hate crimes and religions. Religion might itself be a cause for hate crimes, and the variaty of religions to some degree reflects the diversity of the society.
+
+<div align="center">
+```{r, regression2, results='asis', echo=FALSE}
+my_rg2 <-
+  lm(avr_hc ~ medium_hs_income + pct_unemployed + pct_whi_pvt + GINIidx + pct_nonwhite + pct_hs_degree + pct_nonctz + Very_religious, data=all_data)
+
+#summary(my_rg2)
+stargazer(my_rg2, title="Regression Results", type="html", align=TRUE)
+```
+</div></br>  
+    
+  Suprisingly, the inclusion of this variable reduces the significance of many other independent variables, and itself is not showing statistical significance either. It also largely pulls down the Adjusted R-squred, causing a overfit model. This implies that the independent variable Very_religious might not have much explanatory effect, or that it is related to too many other independent variables, which results in a model that is too complex to be described by the coefficients. However, despite the overfitting consequence, the variables medium household income, pecentage of white people under the poverty line, and the GINI index still maintain a moderate significance to the regression, furthur justify that social inequality is indeed essencial in causing hate crimes.
+  
+</br></br>
+
+## Plots
+
+#### 1
+
+  The first plot I made is a bubble plot showing the correlation between GINI index, percentage of Non-citizen and average hate crimes per 100k. The x and y axises respectively represent the percentage of non-citizen and the GINI index, while the size and color of the bubbles jointly suggest the average occurrences of hate crimes per 100k.    
+  
+<div align="center">
+```{r customized_plot, message=FALSE, warning=FALSE, echo=FALSE}
+plot_data <- all_data %>%
+  arrange(-avr_hc) %>%
+  select(NAME,GINIidx,pct_nonctz,avr_hc) %>%
+  mutate(hc_level = fct_recode(
+           factor(ntile(avr_hc, 5)),
+           `>= 3.5` = "5",
+           `2.5 ~ 3.5` = "4",
+           `1.5 ~ 2.5` = "3",
+           `0.5 ~ 1.5` = "2",
+           `<= 0.5` = "1"
+  )) %>%
+  st_drop_geometry() %>%
+  na.omit()
+
+plot_data %>%
+  ggplot(aes(x=pct_nonctz, y=GINIidx)) +
+  geom_point(aes(color = hc_level, size = hc_level), alpha = 0.6, show.legend = TRUE) +
+  scale_x_continuous(breaks = seq(0, 15, 5), expand = c(0.1, 0.1)) +
+  scale_y_continuous(breaks = seq(0.42, 0.54, 0.03), expand = c(0.1, 0)) +
+  scale_size_discrete(range = c(1,12), name = "Average hate crimes per 100k") +
+  scale_color_brewer(palette = "RdPu", name = "Average hate crimes per 100k") +
+  labs(
+    title = "Hate Crimes v.s. Non-citizen Rate & GINI Index",
+    x = "Percentage of Non-citizen",
+    y = "GINI index"
+  ) +
+  theme_classic() +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    plot.margin = margin(0.6, 0.6, 0.6, 0.6, "cm"),
+    text = element_text(size=13),
+    axis.title = element_text(colour = "salmon"),
+    plot.title = element_text(hjust = 0.35, color = "salmon", face = "bold", size = 18),
+    legend.justification=c(0,0),
+    legend.title = element_text(size=12, color = "salmon")
+  ) 
+
+```
+</div></br>
+
+  From this plot, we can see that states with GINI index around 0.45-0.48 tend to witness more hate crimes, while the percentage of non citizen is not showing a clear corelation to average hate crimes holding the GINI index fixed. It also suggests that the GINI index of states with higher percentage of non citizen are originally higher.
+
+</br>  
+
+#### 2
+
+  The second plot is a map showing the distribution of average hate crimes by states across the United States. Noted that the data from Hawaii is missing for this map plot.
+  
+<div align="center">
+```{r, map_plot, message=FALSE, warning=FALSE, echo=FALSE}
+all_data %>%
+  mutate(qtile = factor(ntile(avr_hc, 5))) %>%
+  st_transform(4269) %>%
+  ggplot() +
+  geom_sf(aes(fill = qtile, color = qtile)) +
+  scale_color_brewer(palette = "OrRd", name = "Average Hate Crime Rates") +
+  scale_fill_brewer(palette = "OrRd", name = "Average Hate Crime Rates", na.value = "grey") +
+  labs(
+    title = "HATE CRIME RATES",
+    subtitle = "Average Hate Crimes Per 100k residents, 2017"
+  ) +
+  theme_void() +
+  theme(
+    plot.margin = unit(c(1,1,1,1), "cm"),
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  ) 
+```
+</div>
+
+</br>
+
+#### 3
+
+  The last plot is Line chart displaying the change in aggregate number of hate crimes per 100k over time, from 2008 to 2017.
+<div align="center">
+```{r, non_map_plot, message=FALSE, warning=FALSE, echo=FALSE}
+yearly_agg <- 
+  read_xls("2008.xls") %>%
+  summarize(`2008` = sum(Total_icd) / sum(Total_pop) * 100000)
+
+k <- 2
+
+for (i in c(2009:2017)) {
+  agg_each <- read_xls(paste(as.character(i), ".xls", sep="")) %>%
+    summarize(total = sum(Total_icd) / sum(Total_pop) * 100000)
+  yearly_agg <- yearly_agg %>%
+    mutate(new = agg_each$total)
+  names(yearly_agg)[k] <- as.character(i)
+  k <- k + 1
+}
+
+yearly_agg <- 
+  yearly_agg %>%
+  gather(key = "year", value = "agg")
+
+yearly_agg %>%
+  ggplot() +
+  geom_line(aes(x=as.numeric(year), y=as.numeric(agg)), color = "red", size = 1, show.legend=FALSE) +
+  geom_point(aes(x=as.numeric(year), y=as.numeric(agg)), color = "blue", show.legend=FALSE) +
+  scale_x_continuous(breaks = c(2008:2017)) +
+  labs(
+    title = "Aggregated number of hate crimes each year per 100k (2008-2017)",
+    x = "Year",
+    y = "Hate crimes per 100k"
+  ) + 
+  theme_bw() +
+  theme(
+    plot.margin = unit(c(2,2,2,1), "cm"),
+    plot.title = element_text(hjust = 0.4, face = "bold", size = 15),
+    text = element_text(size=13)
+  ) 
+
+```
+</div>
+
+## Conclusions and Reflections
+
+  The results of my regressions, as well as the plots I made, suggest that the distribution of wealth and the composition of residents, both of which are powerful indicators for inequality, are important determinants for hate crimes. 
+  
+  Although many of the variables I tested, which are not included in this report, such as the divorced rate by states, the number of prisoners by states, and etc., fail to show statistically significant results, it is not necessarily because they have no effects on hate crimes, but rather that they are too closely related to some other variables such that adding them would bring in too much omitted variable bias to the regression. This reminds me to be always cautious about choosing independent variables, and in particular, be mindful of their potential inner relationship. In addition, when analysing and reporting the result, we should combine the information we get from data with our real-life knowledge, rather than be hashy to draw conclusions directly from the data. As a matter of fact, data might be misleading for most of the time, and we would never understand the situation thoroughly without looking for background knowledge and cultural contexts.
+  
+
+  
+  
+  

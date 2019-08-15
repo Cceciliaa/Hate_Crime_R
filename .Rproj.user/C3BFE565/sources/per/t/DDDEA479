@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1565634832961.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3490590605",
+    "id" : "DDDEA479",
+    "lastKnownWriteTime" : 1565846571,
+    "last_content_update" : 1565846571876,
+    "path" : "~/Desktop/Cecilia/Study/DPSS/Capstone/Capstone.Rmd",
+    "project_path" : "Capstone.Rmd",
+    "properties" : {
+        "cursorPosition" : "7,27",
+        "last_setup_crc32" : "35FB7186bb338d19",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

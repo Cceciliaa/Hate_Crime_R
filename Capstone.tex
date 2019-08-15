@@ -1,0 +1,475 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Hate Crimes in the U.S.},
+            pdfauthor={Cecilia Cai},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\providecommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{Hate Crimes in the U.S.}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{Cecilia Cai}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{8/10/2019}
+
+
+\begin{document}
+\maketitle
+
+\hypertarget{research-background}{%
+\subsection{Research Background}\label{research-background}}
+
+A hate crime, as defined by the FBI, is a crime ``motivated in whole or
+in part by an offender's bias against a race, religion, disability,
+sexual orientation, ethnicity, gender, or gender identity''. As stated
+by the FBI, ``on average, U.S. residents experienced an estimated
+250,000 hate crime victimizations each year between 2004 and 2015''.
+Previously, the FiveThirtyEight had done a research in 2017, analysing
+the reasons that might lead to an increase in hate crimes using U.S.
+state-level data. The conclusion they derived at was that ``higher rates
+of hate crimes are tied to income inequality'', which remains to be true
+before and after the president election.
+
+In our capstone project, we looked into the data related to the
+occurrance of hate crimes across the U.S., trying to replicate the
+previous FiveThirtyEight analysis using updated hate crime data and
+additional regressors, and explore additional potential influencing
+factors.
+
+I use average annual hate crimes per 100k population as our dependent
+variable, getting the data from the FBI official website, and
+specifically, the 2017 report by states. According to the official FBI
+website on hate crimes
+(\url{https://www.fbi.gov/services/cjis/ucr/hate-crime}), these data was
+collected by the Uniform Crime Reporting (UCR) Program, who cooperated
+with many local and state law enforcement agencies to track and verify
+the data. The incidents are reported by individuals and agencies to the
+the UCR voluntarily, who then categorizes and gather these data by the
+biases and motivations of the cases. This process potentially bears many
+biases. For one thing, the inconsistent in public's perception of hate
+crime might result in the disparity in quality of the reported number
+across different stats. Although the FBI defination for hate crimes is
+quite detailed, the statement is rather conceptual, which is hard to
+evaluate by some universal standards. The significant differences in
+relevant laws and regulations, as well as their enforcement, across
+states, worsen the situation, for they potentially differ the public
+understanding and awareness of hate crimes, which affect their tendency
+to report a case. On the other hand, state governments may also modify
+their reported data for certain political purposes. For another, the
+unsystematic and weakly operational methods of collecting data are
+likely to cause mistakes or missing values. And indeed, the FBI data set
+does not have record from some states such as Hawaii.
+
+\hypertarget{regression}{%
+\subsection{Regression}\label{regression}}
+
+In spite of many inevitable biases, it is still possible to get a basic
+understanding of the situation of hate crimes in the U.S. by relating
+the hate crime data to some other variables from other data sets, and
+analyse the correlations and causalities between these variables.
+
+In fact, I established a multivariable linear regression to investigate
+the factors related to hate crimes in the U.S.. As instructed, I
+referred to the 2016 ACS 5-year data, which is the latest version of the
+5-year aggregated data. I also drew some 2017 data from other databases,
+for the year 2017 witnessed a great increase in hate crime occurrance,
+and would have more representitive data. I ran an initial regression
+using the required variables, without adding additional ones.
+
+\% Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard
+University. E-mail: hlavac at fas.harvard.edu \% Date and time: Thu, Aug
+15, 2019 - 14:08:04 \% Requires LaTeX packages: dcolumn
+
+\begin{table}[!htbp] \centering 
+  \caption{Regression Results} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lD{.}{.}{-3} } 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{1}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-2} 
+\\[-1.8ex] & \multicolumn{1}{c}{avr\_hc} \\ 
+\hline \\[-1.8ex] 
+ medium\_hs\_income & 0.0004^{***} \\ 
+  & (0.0001) \\ 
+  & \\ 
+ pct\_unemployed & -0.302 \\ 
+  & (0.518) \\ 
+  & \\ 
+ pct\_whi\_pvt & 1.031^{**} \\ 
+  & (0.461) \\ 
+  & \\ 
+ GINIidx & 115.684^{***} \\ 
+  & (30.105) \\ 
+  & \\ 
+ pct\_nonwhite & 0.142 \\ 
+  & (0.103) \\ 
+  & \\ 
+ pct\_hs\_degree & -0.340^{**} \\ 
+  & (0.161) \\ 
+  & \\ 
+ pct\_nonctz & -0.896^{***} \\ 
+  & (0.268) \\ 
+  & \\ 
+ Constant & -69.149^{***} \\ 
+  & (17.579) \\ 
+  & \\ 
+\hline \\[-1.8ex] 
+Observations & \multicolumn{1}{c}{50} \\ 
+R$^{2}$ & \multicolumn{1}{c}{0.498} \\ 
+Adjusted R$^{2}$ & \multicolumn{1}{c}{0.414} \\ 
+Residual Std. Error & \multicolumn{1}{c}{3.112 (df = 42)} \\ 
+F Statistic & \multicolumn{1}{c}{5.941$^{***}$ (df = 7; 42)} \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{1}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table}
+
+As expected, and in line with the conclusion of the previous study
+conducted by the FiveThirtyEight, the variables of medium household
+income, GINI index, and percentage of white people below poverty line,
+all of which as indicators for the economic inequality level of the
+state, are positively correlated to average hate crimes. This
+strengthens that, with newer data, inequality, especially in terms of
+income, is still an important determinant for the frequency of hate
+crimes. Moreover, I noticed that the percentage of non citizen in the
+state negatively influences the happening of hate crimes, and is quite
+significant statistically, which was against my initial intuition. This
+result became clearer to me after some additional research on the
+contexts of hate crimes, as I learned that most of the hate crimes in
+the U.S. are actually conducted by white citizens. In fact, a higher
+percentage of non citizens implies a more diversed culture, which might
+also explain the negative coefficient. This suggests that inequality in
+social status and the degree of inclusiveness of social enviroment are
+also related to the rate of hate crimes.
+
+For the two customized independent variables, I used the data from the
+statista, respectively per capita alcohol consumption and per capita
+state and local government debt. I ran a simple multivariable linear
+regression with these veriables as independent variables, without
+including any weights, fixed effects, or interaction terms, and the
+result is shown in the section below.
+
+\% Table created by stargazer v.5.2.2 by Marek Hlavac, Harvard
+University. E-mail: hlavac at fas.harvard.edu \% Date and time: Thu, Aug
+15, 2019 - 14:08:04 \% Requires LaTeX packages: dcolumn
+
+\begin{table}[!htbp] \centering 
+  \caption{Regression Results} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lD{.}{.}{-3} } 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{1}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-2} 
+\\[-1.8ex] & \multicolumn{1}{c}{avr\_hc} \\ 
+\hline \\[-1.8ex] 
+ medium\_hs\_income & 0.0003^{**} \\ 
+  & (0.0001) \\ 
+  & \\ 
+ pct\_unemployed & -0.527 \\ 
+  & (0.480) \\ 
+  & \\ 
+ pct\_whi\_pvt & 1.280^{***} \\ 
+  & (0.433) \\ 
+  & \\ 
+ GINIidx & 64.057^{*} \\ 
+  & (34.019) \\ 
+  & \\ 
+ pct\_nonwhite & 0.209^{**} \\ 
+  & (0.098) \\ 
+  & \\ 
+ pct\_hs\_degree & -0.300^{*} \\ 
+  & (0.149) \\ 
+  & \\ 
+ pct\_nonctz & -0.887^{***} \\ 
+  & (0.247) \\ 
+  & \\ 
+ alcohol\_pc & 1.411^{*} \\ 
+  & (0.791) \\ 
+  & \\ 
+ debts & 0.001^{**} \\ 
+  & (0.0002) \\ 
+  & \\ 
+ Constant & -49.932^{**} \\ 
+  & (19.265) \\ 
+  & \\ 
+\hline \\[-1.8ex] 
+Observations & \multicolumn{1}{c}{50} \\ 
+R$^{2}$ & \multicolumn{1}{c}{0.600} \\ 
+Adjusted R$^{2}$ & \multicolumn{1}{c}{0.510} \\ 
+Residual Std. Error & \multicolumn{1}{c}{2.847 (df = 40)} \\ 
+F Statistic & \multicolumn{1}{c}{6.656$^{***}$ (df = 9; 40)} \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{1}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table}
+
+In this regression, both per capita alcohol consumption and per capita
+state and local government debt show positive influence to the average
+hate crimes per 100k population, with significant levels at respectively
+90\% and 95\%. Besides, all other independent variables, except the
+percentage of unemployment rate, are showing high significant level,
+especially the percentage of noncitizen rate. The inclusion of these two
+variables also slightly increases the R-squared value, suggesting that
+they do improve the regression model without bringing in much noises.
+
+Perceiving from common cognition perspective, the variable of per capita
+state and local government debt evaluates the economic status of the
+state, which affects the operation of the goverment and the general
+living quality of its people. The higher the debts, which indicates that
+the state might be lacking money for its administrations and
+investments, the more likely hate crimes would occur. This suggests that
+the rate of hate crimes correlates with the capability and effectiveness
+of government administration.
+
+As for alcohol consumption, which is considered to be likely to increase
+one's irrationality and tendency to cause chaos, it holds the potential
+for increasing hate crimes. Therefore, lower stability of the society as
+a whole may also explain for higher occurrance of hate crimes.
+
+Curious about other influencing factors, I did an additional regression,
+taking out the two additional independent variables and filling in with
+the percentage of very religious people in each state. I chose this
+variable because many studies on hate crimes report a strong relation
+between hate crimes and religions. Religion might itself be a cause for
+hate crimes, and the variaty of religions to some degree reflects the
+diversity of the society.
+
+Regression Results
+
+Dependent variable:
+
+avr\_hc
+
+medium\_hs\_income
+
+0.0002**
+
+(0.0001)
+
+pct\_unemployed
+
+0.157
+
+(0.312)
+
+pct\_whi\_pvt
+
+0.465*
+
+(0.258)
+
+GINIidx
+
+33.949*
+
+(18.313)
+
+pct\_nonwhite
+
+-0.032
+
+(0.066)
+
+pct\_hs\_degree
+
+-0.087
+
+(0.092)
+
+pct\_nonctz
+
+-0.191
+
+(0.168)
+
+Very\_religious
+
+-0.006
+
+(0.042)
+
+Constant
+
+-23.695**
+
+(10.951)
+
+Observations
+
+49
+
+R2
+
+0.319
+
+Adjusted R2
+
+0.183
+
+Residual Std. Error
+
+1.694 (df = 40)
+
+F Statistic
+
+2.341** (df = 8; 40)
+
+Note:
+
+\emph{p\textless{}0.1; \textbf{p\textless{}0.05; }}p\textless{}0.01
+
+Suprisingly, the inclusion of this variable reduces the significance of
+many other independent variables, and itself is not showing statistical
+significance either. It also largely pulls down the Adjusted R-squred,
+causing an overfit model. This implies that the independent variable
+Very\_religious might not have much explanatory effect, or that it is
+related to too many other independent variables, which results in a
+model that is too complex to be described by the existing coefficients.
+However, despite the overfitting consequence, the variables medium
+household income, pecentage of white people under the poverty line, and
+the GINI index still maintain a moderate significance to the regression,
+furthur justify that income inequality is indeed essencial in causing
+hate crimes.
+
+\hypertarget{plots}{%
+\subsection{Plots}\label{plots}}
+
+\hypertarget{section}{%
+\paragraph{1}\label{section}}
+
+The first plot I made is a bubble plot showing the correlation between
+GINI index, percentage of Non-citizen and average hate crimes per 100k.
+The x and y axises respectively represent the percentage of non-citizen
+and the GINI index, while the size and color of the bubbles jointly
+suggest the average occurrences of hate crimes per 100k.
+
+\begin{center}\includegraphics{Capstone_files/figure-latex/customized_plot-1} \end{center}
+
+From this plot, we can see that states with GINI index around 0.45-0.48
+tend to witness more hate crimes, while the percentage of non citizen is
+not showing a clear corelation to average hate crimes holding the GINI
+index fixed. It also suggests that the GINI index of states with higher
+percentage of non citizen are originally higher.
+
+\hypertarget{section-1}{%
+\paragraph{2}\label{section-1}}
+
+The second plot is a map showing the distribution of average hate crimes
+by states across the United States. Noted that the data from Hawaii is
+missing for this map plot.
+
+\begin{center}\includegraphics{Capstone_files/figure-latex/map_plot-1} \end{center}
+
+\hypertarget{section-2}{%
+\paragraph{3}\label{section-2}}
+
+The last plot is Line chart displaying the change in aggregate number of
+hate crimes per 100k over time, from 2008 to 2017.
+
+\begin{center}\includegraphics{Capstone_files/figure-latex/non_map_plot-1} \end{center}
+
+\hypertarget{conclusions-and-reflections}{%
+\subsection{Conclusions and
+Reflections}\label{conclusions-and-reflections}}
+
+The results of my regressions, as well as the plots I made, suggest that
+the distribution of wealth, the condition of government administration,
+and the composition of residents, are all important determinants for
+hate crimes. Extending the conclusion from the previous study by
+FiveThirtyEight, not only income inequality, but also inequality in
+other aspects such as social status and cultural backgroud, increase
+rates of hate crimes.
+
+Although many of the variables I tested, which are not included in this
+report, such as the divorced rate by states, the number of prisoners by
+states, and etc., fail to show statistically significant results, it is
+not necessarily because they have no effects on hate crimes, but rather
+that they are too closely related to some other variables such that
+adding them would bring in too much omitted variable bias to the
+regression. This reminds me to be always cautious about choosing
+independent variables, and in particular, be mindful of their potential
+inner relationship. In addition, when analysing and reporting the
+result, we should combine the information we get from data with our
+real-life knowledge, rather than be hashy to draw conclusions directly
+from the data. As a matter of fact, data might be misleading for most of
+the time, and we would never understand the situation thoroughly without
+looking for background knowledge and cultural contexts.
+
+
+\end{document}

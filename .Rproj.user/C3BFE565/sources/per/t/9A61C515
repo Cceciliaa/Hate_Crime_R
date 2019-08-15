@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1565829764880.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "154744081",
+    "id" : "9A61C515",
+    "lastKnownWriteTime" : 1564517376,
+    "last_content_update" : 1564517376,
+    "path" : "~/Desktop/Cecilia/Study/DPSS/R/Lecture/L5/L5 - ggplot2.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "251,0",
+        "scrollLine" : "245"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 9,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
